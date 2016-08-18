@@ -4,32 +4,32 @@
 Demonstrar conhecimentos em nginx, mount (fstab), python e fabric. Vou apresentar as linhas de comando para realizar as tarefas de: verificação do mountpoint, instalação do nginx, configuração e iniciação do serviço. E ao final irei apresentar uma automatização desse processo.
 
 ## Tarefas
-Check if is mounted. Helper: is_mounted() on fabfile.py
+1. Check if mountpoint is mounted. Helper: is_mounted() on fabfile.py
 ```
 sudo mount -l | grep /data
 ```
 
-Create directory to mountpoint if is not exists.
+2. Create directory to mountpoint if is not exists.
 ```
 sudo mkdir /data
 ```
 
-Mount partition on mountpoint. If partition is on fstab, run ```mount -a```. Helper: mount() on fabfile.py
+3. Mount partition on mountpoint. If partition is on fstab, run ```sudo mount -a```. Helper: mount() on fabfile.py
 ```
 sudo mount {path/partition} /data 
 ```
 
-Check if nginx is installed. Helper: check_nginx() in fabfile.py 
+4. Check if nginx is installed. Helper: check_nginx() in fabfile.py 
 ```
 sudo which nginx
 ```
 
-If you don't have nginx, install it and run.
+5. If you don't have nginx, install it and run.
 ```
 sudo apt-get update; sudo apt-get install nginx; sudo service nginx start;
 ```
 
-Create a configuration file ```/etc/nginx/sites-available/{project_name}```.
+6. Create a configuration file ```/etc/nginx/sites-available/{project_name}```.
 ```
 server {
     listen 80;
@@ -58,7 +58,7 @@ server {
 }
 ```
 
-Create web file ```/data/index.html```.
+7. Create web file ```/data/index.html```.
 ```
 <!DOCTYPE html>
 <html>
@@ -79,12 +79,12 @@ Create web file ```/data/index.html```.
 </html>
 ```
 
-Linking new configuration file to enabled folder on nginx.
+8. Linking new configuration file to enabled folder on nginx.
 ```
 ln -sf /etc/nginx/sites-available/{project_name} /etc/nginx/sites-enabled/{project_name}
 ```
 
-Restart nginx to changes takes effects.
+9. Restart nginx to changes takes effects.
 ```
 sudo service nginx restart
 ```
@@ -93,16 +93,18 @@ sudo service nginx restart
 
 ## Requisitos
 ```
-virtualenv fabricenv
+pip install virtualenv
 
-source fabricenv/bin/active
+virtualenv fabric
+
+source fabric/bin/active
 
 pip install fabric
 
 ```
 
 ## Configurações
-Basta configurar o webserver e globals:
+Agora basta configurar as variáveis:
 ```
 env.project_name = '' # project_name
 
@@ -121,16 +123,20 @@ env.extra_location = '' # extra location path
 env.extra_index = '' # index name to extra location
 ```
 
-Depois de configurado basta rodar:
+Depois de configurado faça um deploy completo:
 ```
 fab webserver deploy
 ```
 
-Para ver uma lista de tasks and helpers:
+Ou  veja uma lista de tasks and helpers:
 ```
 fab -l
 ```
 
+Usage:
+```
+fab [webserver] [task]
+```
 
 ## Referências
 - https://www.freebsd.org/doc/handbook/mount-unmount.html
