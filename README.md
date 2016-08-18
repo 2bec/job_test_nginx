@@ -105,22 +105,22 @@ ssh user@webserver.com.br
 	```
 
 # Automação
-É necessário ter Python e Fabric instalado, opcionalmente você pode instalar uma virtualenv. Veja https://www.python.org/downloads/ e http://www.fabfile.org/installing.html e https://virtualenv.pypa.io/en/stable/installation/.
+Você prcisa do python instalado. Veja https://www.python.org/downloads/.
+Recomendo criar uma virtualenv antes de instalar os requisitos de ' requirements.txt '. Veja https://virtualenv.pypa.io/en/stable/installation/.
 
-## Requisitos
+## Criar virtualenv
 ```
-pip install virtualenv
-
 virtualenv nginx_fabric
+```
 
-source nginx_fabric/bin/active
-
-pip install fabric
+## Instalar requisitos
+```
+pip install -r requirements.txt
 
 ```
 
 ## Configurações
-	Agora basta configurar as variáveis:
+Agora basta configurar as variáveis:
 ```
 env.project_name = '' # project_name
 
@@ -144,7 +144,7 @@ env.extra_location = '' # extra location path
 env.extra_index = '' # index name to extra location
 ```
 
-## Run
+## Executar
 Depois de configurado faça um deploy completo:
 ```
 fab webserver deploy
@@ -155,7 +155,7 @@ Ou, veja uma lista de tasks and helpers:
 fab -l
 ```
 
-Usage:
+Uso:
 ```
 fab [webserver] [task]
 ```
