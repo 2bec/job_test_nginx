@@ -1,7 +1,7 @@
 # job_test_rs
 
 ## Apresentação
-Demonstrar conhecimentos em nginx, mount (fstab), python e fabric. Será apresentado as linhas de comando para realizar as tarefas de verificação do mountpoint, montagem, verificação do nginx, instalação, configuração e iniciação do serviço. E ao final será apresentado uma automatização desse processo com fabric.
+Demonstrar conhecimentos básicos em nginx, mount (fstab), python e fabric. Será apresentado as linhas de comando para realizar as tarefas de verificação do mountpoint, montagem, verificação do nginx, instalação, configuração e iniciação do serviço. E ao final será apresentado uma automatização desse processo com fabric.
 
 Para montar a particição as premissas são:
 - partição já listada no /etc/fstab;
@@ -26,6 +26,10 @@ ssh user@webserver.com.br
 
 2. Create directory to mountpoint if is not exists.
 	```
+	ls -l /data
+	ls: cannot access /data: No such file or directory
+	```
+	```
 	sudo mkdir /data
 	```
 
@@ -44,7 +48,7 @@ ssh user@webserver.com.br
 	sudo apt-get update; sudo apt-get install nginx; sudo service nginx start;
 	```
 
-6. Create a configuration file ```/etc/nginx/sites-available/{project_name}```. Helper: create_and_link_site_project() in fabfile.py
+6. Create a configuration file ` /etc/nginx/sites-available/{project_name} `. Helper: create_and_link_site_project() in fabfile.py
 	```
 	server {
 	    listen 80;
@@ -62,18 +66,18 @@ ssh user@webserver.com.br
 	        try_files $uri $uri/ /index.html;
 	    }
 
-	    location /%(extra_location)s{
+	    location /%(extra_location)s{ # redirect to project_name
 	        return 301 $scheme://$server_name/%(project_name)s;
 	    }
 
-	    location /%(proxy_location)s{
+	    location /%(proxy_location)s{ # proxy external host
 	        proxy_pass http://%(proxy_host)s;
 	        proxy_redirect http://%(proxy_host)s http://%(server_name)s/%(proxy_location)s/;
 	    }
 	}
 	```
 
-7. Create web file ```/data/index.html```. Helper: create_index_html() in fabfile.py
+7. Create web file `/data/index.html`. Helper: create_index_html() in fabfile.py
 	```
 	<!DOCTYPE html>
 	<html>
@@ -106,26 +110,31 @@ ssh user@webserver.com.br
 
 # Automação
 Você prcisa do python instalado. Veja https://www.python.org/downloads/.
-Recomendo criar uma virtualenv antes de instalar os requisitos de ' requirements.txt '. Veja https://virtualenv.pypa.io/en/stable/installation/.
+Recomendo criar uma virtualenv antes de instalar os requisitos de ` requirements.txt `. Veja https://virtualenv.pypa.io/en/stable/installation/.
 
 ## Criar virtualenv
 ```
 virtualenv nginx_fabric
 ```
 
-## Instalar requisitos
+## Ativar sua nova virtualenv
+```
+source nginx_fabric/bin/active
+```
+
+## Instalar os requisitos
 ```
 pip install -r requirements.txt
 
 ```
 
 ## Configurações
-Agora basta configurar as variáveis:
+Agora basta configurar as variáveis no arquivo ` fabfile.py `:
 ```
 env.project_name = '' # project_name
 
 # server config
-env.hosts = [''] # webserver
+env.hosts = [''] # IP or hostname webserver
 env.port = '' # port to connect
 env.user = '' # create a diferente user like deploy
 
@@ -145,7 +154,7 @@ env.extra_index = '' # index name to extra location
 ```
 
 ## Executar
-Depois de configurado faça um deploy completo:
+Depois de configurar faça um deploy completo:
 ```
 fab webserver deploy
 ```
@@ -153,6 +162,23 @@ fab webserver deploy
 Ou, veja uma lista de tasks and helpers:
 ```
 fab -l
+
+Available commands:
+
+    check_nginx                     Check if nginx is installed
+    create_and_link_site_project    Create nginx configuration file to project
+    create_index_html               Create index file
+    deploy                          Make a full deploy
+    install_nginx                   Install nginx
+    is_mounted                      Check if mountpoint is mounted
+    mount                           Mount partition on mountpoint
+    restart_nginx                   Restart nginx
+    setup                           Setup and mount partition
+    start_nginx                     Start nginx
+    symb_link_enable_project_nginx  Symbolic links to enable projects on nginx
+    test_nginx                      Test configurations files for nginx
+    webserver                       Use the webserver
+
 ```
 
 Uso:
