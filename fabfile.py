@@ -18,23 +18,27 @@ def webserver():
     """
     Use the webserver
     """
-    env.hosts = ['162.243.174.20']
-    env.port = '22' # port to connect
-    env.user = 'bec' # create a diferente user like deploy
+    env.hosts = ['']
+    env.port = '' # port to connect
+    env.user = '' # create a diferente user like deploy
     # mount partition
     env.path_mountpoint = '/data' # complete path to mounted partition
-    env.path_partition = '/dev/vda' # complete path to partition to mount
+    env.path_partition = '' # complete path to partition to mount
     # nginx config
-    env.proxy_host = 'www.google.com'
-    env.server_name = '162.243.174.20'
-    env.proxy_location = 'azion'
-    env.access_log = '/tmp/access_log_%(project_name)s' % env
-    env.error_log = '/tmp/error_log_%(project_name)s' % env
-    env.page_index = 'index.html'
-    env.extra_location = 'app2'
-    env.extra_index = 'index.html'
+    env.proxy_host = 'www.azion.com' # proxy domain
+    env.server_name = '' # server_name nginx
+    env.proxy_location = 'azion' # domain path to proxy
+    env.access_log = '/tmp/access_log_%(project_name)s' % env # path to access log
+    env.error_log = '/tmp/error_log_%(project_name)s' % env # path to error_log
+    env.page_index = 'index.html' # indexes nginx root
+    env.extra_location = 'app2' # domain path to extra location
+    env.extra_index = 'index.html' # indexes nginx to extra location
+
 
 def deploy():
+    """
+    Make a full deploy
+    """
     setup()
     if not check_nginx():
         install_nginx()
@@ -45,7 +49,7 @@ def deploy():
 
 def setup():
     """
-    Setup
+    Setup and mount partition
     """
     if not is_mounted():
         if not exists(env.path_mountpoint):
@@ -63,6 +67,9 @@ def setup():
 
 
 def is_mounted():
+    """
+    Check if mountpoint is mounted
+    """
     with settings(warn_only=True):
         if run('mount -l | grep %(path_mountpoint)s' % env):
             return True
@@ -71,11 +78,17 @@ def is_mounted():
 
 
 def mount():
+    """
+    Mount partition on mountpoint
+    """
     # mount -a
     return sudo("mount %(path_partition)s %(path_mountpoint)s" % env)
 
 
 def check_nginx():
+    """
+    Check if nginx is installed
+    """
     with settings(warn_only=True):
         if sudo("which nginx"):
             return True
@@ -92,7 +105,7 @@ def install_nginx():
 
 def create_and_link_site_project():
     """
-    Create configuration file to site
+    Create nginx configuration file to project
     """
     # todo - use upload_template
     #upload_template('configs/nginx_template.tpl','/etc/nginx/sites-available/%(project_name)s' % env, context=context, mode=0644, use_sudo=True)
@@ -132,7 +145,7 @@ server {
 
 def create_index_html():
     """
-    Create index file to nginx
+    Create index file
     """
     template = """<!DOCTYPE html>
 <html>
@@ -150,7 +163,7 @@ def create_index_html():
     <h1>This is my APP: %(project_name)s!</h1>
     <p>Your APP index page can be shown.</p>
 </body>
-</html>"""
+</html>""" % env
     local_path = tempfile.mktemp('.html')
     with open(local_path, 'w+') as output:
         output.write(template)
