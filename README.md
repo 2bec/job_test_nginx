@@ -1,134 +1,156 @@
 # job_test_rs
 
 ## Apresentação
-Demonstrar conhecimentos em nginx, mount (fstab), python e fabric. Vou apresentar as linhas de comando para realizar as tarefas de: verificação do mountpoint, instalação do nginx, configuração e iniciação do serviço. E ao final irei apresentar uma automatização desse processo.
+Demonstrar conhecimentos em nginx, mount (fstab), python e fabric. Será apresentado as linhas de comando para realizar as tarefas de verificação do mountpoint, montagem, verificação do nginx, instalação, configuração e iniciação do serviço. E ao final será apresentado uma automatização desse processo com fabric.
+
+Para montar a particição as premissas são:
+- partição já listada no /etc/fstab;
+
+Para a configuração do nginx as premissas são:
+
+- Requisitar url webserver.com.br/app1 mostrar index.html (/), mas sem mostrar o nome do arquivo no final do url;
+- Requisitar url webserver.com.br/app2 redirecionar para webserver.com.br/app1;
+- Requisitar webserver.com.br/proxy mostrar página do host.proxy.com.br mas não mudar a URL;
+- Persistir essas configurações mesmo com o reboot do servidor;
 
 ## Tarefas
+Primeiro acesse o servidor, se for realizar local (locahost) pule essa parte.
+```
+ssh user@webserver.com.br
+```
+
 1. Check if mountpoint is mounted. Helper: is_mounted() on fabfile.py
-```
-sudo mount -l | grep /data
-```
+	```
+	sudo mount -l | grep /data
+	```
 
 2. Create directory to mountpoint if is not exists.
-```
-sudo mkdir /data
-```
+	```
+	sudo mkdir /data
+	```
 
-3. Mount partition on mountpoint. If partition is on fstab, run ```sudo mount -a```. Helper: mount() on fabfile.py
-```
-sudo mount {path/partition} /data 
-```
+3. Mount partition on mountpoint. If partition is on fstab, run ` sudo mount -a `. Helper: mount() on fabfile.py
+	```
+	sudo mount {path/partition} /data
+	```
 
 4. Check if nginx is installed. Helper: check_nginx() in fabfile.py 
-```
-sudo which nginx
-```
+	```
+	sudo which nginx
+	```
 
-5. If you don't have nginx, install it and run.
-```
-sudo apt-get update; sudo apt-get install nginx; sudo service nginx start;
-```
+5. If you don't have nginx, install it and run. Helper: install_nginx() in fabfile.py
+	```
+	sudo apt-get update; sudo apt-get install nginx; sudo service nginx start;
+	```
 
-6. Create a configuration file ```/etc/nginx/sites-available/{project_name}```.
-```
-server {
-    listen 80;
-    server_name %(server_name)s;
+6. Create a configuration file ```/etc/nginx/sites-available/{project_name}```. Helper: create_and_link_site_project() in fabfile.py
+	```
+	server {
+	    listen 80;
+	    server_name %(server_name)s;
 
-    charset utf-8;
+	    charset utf-8;
 
-    root %(path_mountpoint)s;
-    index %(page_index)s;
+	    root %(path_mountpoint)s;
+	    index %(page_index)s;
 
-    access_log %(access_log)s;
-    error_log %(error_log)s;
+	    access_log %(access_log)s;
+	    error_log %(error_log)s;
 
-    location /%(project_name)s{
-        try_files $uri $uri/ /index.html;
-    }
+	    location /%(project_name)s{
+	        try_files $uri $uri/ /index.html;
+	    }
 
-    location /%(extra_location)s{
-        return 301 $scheme://$server_name/%(project_name)s;
-    }
+	    location /%(extra_location)s{
+	        return 301 $scheme://$server_name/%(project_name)s;
+	    }
 
-    location /%(proxy_location)s{
-        proxy_pass http://%(proxy_host)s;
-        proxy_redirect http://%(proxy_host)s http://%(server_name)s/%(proxy_location)s/;
-    }
-}
-```
+	    location /%(proxy_location)s{
+	        proxy_pass http://%(proxy_host)s;
+	        proxy_redirect http://%(proxy_host)s http://%(server_name)s/%(proxy_location)s/;
+	    }
+	}
+	```
 
-7. Create web file ```/data/index.html```.
-```
-<!DOCTYPE html>
-<html>
-<head>
-    <title>%(project_name)s</title>
-    <style>
-    body {
-        width: 35em;
-        margin: 0 auto;
-        font­family: Tahoma, Verdana, Arial, sans­serif;
-    }
-    </style>
-</head>
-<body>
-    <h1>This is my APP: %(project_name)s!</h1>
-    <p>Your APP index page can be shown.</p>
-</body>
-</html>
-```
+7. Create web file ```/data/index.html```. Helper: create_index_html() in fabfile.py
+	```
+	<!DOCTYPE html>
+	<html>
+	<head>
+	    <title>%(project_name)s</title>
+	    <style>
+	    body {
+	        width: 35em;
+	        margin: 0 auto;
+	        font­family: Tahoma, Verdana, Arial, sans­serif;
+	    }
+	    </style>
+	</head>
+	<body>
+	    <h1>This is my APP: %(project_name)s!</h1>
+	    <p>Your APP index page can be shown.</p>
+	</body>
+	</html>
+	```
 
-8. Linking new configuration file to enabled folder on nginx.
-```
-ln -sf /etc/nginx/sites-available/{project_name} /etc/nginx/sites-enabled/{project_name}
-```
+8. Linking new configuration file to enabled folder on nginx. Helper: symb_link_enable_project_nginx() in fabfile.py
+	```
+	ln -sf /etc/nginx/sites-available/{project_name} /etc/nginx/sites-enabled/{project_name}
+	```
 
-9. Restart nginx to changes takes effects.
-```
-sudo service nginx restart
-```
+9. Restart nginx to changes takes effects. Helper: restart_nginx() in fabfile.py
+	```
+	sudo service nginx restart
+	```
 
 # Automação
+É necessário ter Python e Fabric instalado, opcionalmente você pode instalar uma virtualenv. Veja https://www.python.org/downloads/ e http://www.fabfile.org/installing.html e https://virtualenv.pypa.io/en/stable/installation/.
 
 ## Requisitos
 ```
 pip install virtualenv
 
-virtualenv fabric
+virtualenv nginx_fabric
 
-source fabric/bin/active
+source nginx_fabric/bin/active
 
 pip install fabric
 
 ```
 
 ## Configurações
-Agora basta configurar as variáveis:
+	Agora basta configurar as variáveis:
 ```
 env.project_name = '' # project_name
 
+# server config
 env.hosts = [''] # webserver
 env.port = '' # port to connect
 env.user = '' # create a diferente user like deploy
+
+# fstab/mount configs
 env.path_mountpoint = '' # complete path to mounted partition
 env.path_partition = '' # complete path to partition to mount
-env.proxy_host = '' # proxy host to serve
+
+# nginx configs
 env.server_name = '' # same the env.hosts
-env.proxy_location = '' # path to proxy
+env.page_index = '' # index root
 env.access_log = '' # path to access logs
 env.error_log = '' # path to error logs
-env.page_index = '' # index root
+env.proxy_host = '' # proxy host to serve
+env.proxy_location = '' # path to proxy
 env.extra_location = '' # extra location path
 env.extra_index = '' # index name to extra location
 ```
 
+## Run
 Depois de configurado faça um deploy completo:
 ```
 fab webserver deploy
 ```
 
-Ou  veja uma lista de tasks and helpers:
+Ou, veja uma lista de tasks and helpers:
 ```
 fab -l
 ```
